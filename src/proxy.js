@@ -35,12 +35,12 @@ let asHandlers = {
     // TODO: test to ensure that parse errors here fail gracefully.
     r.params = querystring.parse(r._source.toString())
   },
-  'buffer': () => {},
-  'string': () => {},
+  'buffer': () => { },
+  'string': () => { },
 }
 
 function wrapAsync(intercept) {
-  return function(req, resp, cycle) {
+  return function (req, resp, cycle) {
     let result = intercept.call(this, req, resp, cycle)
     if (result && typeof result.then === 'function') {
       return result
@@ -54,7 +54,7 @@ function wrapAsync(intercept) {
 
 function asIntercept(opts, intercept) {
   if (opts.as) {
-    return co.wrap(function*(req, resp, cycle) {
+    return co.wrap(function* (req, resp, cycle) {
       let r = opts.phase === 'request' ? req : resp
       yield r._load()
       asHandlers[opts.as](r)
@@ -74,8 +74,8 @@ let otherIntercept = (() => {
     if (isUrl) { return getUrlTester(tester)(testee) }
     return tester == testee // eslint-disable-line eqeqeq
   }
-  return function(opts, intercept) {
-    return function(req, resp, cycle) {
+  return function (opts, intercept) {
+    return function (req, resp, cycle) {
 
       let isReq = opts.phase === 'request' || opts.phase === 'request-sent'
         , reqContentType = req.headers['content-type']
@@ -161,13 +161,13 @@ export default class Proxy extends EventEmitter {
 
       cycle.on('log', log => this.emit('log', log))
 
-      co.call(this, function*() {
+      co.call(this, function* () {
         req._setHttpSource(fromClient, opts.reverse)
         try { yield this._runIntercepts('request', cycle) }
-        catch(ex) { this._emitError(ex, 'request') }
+        catch (ex) { this._emitError(ex, 'request') }
         let partiallyFulfilledRequest = yield cycle._sendToServer()
         try { yield this._runIntercepts('request-sent', cycle) }
-        catch(ex) { this._emitError(ex, 'request-sent') }
+        catch (ex) { this._emitError(ex, 'request-sent') }
         if (partiallyFulfilledRequest === undefined) {
           this.emit('log', {
             level: 'debug',
@@ -178,10 +178,10 @@ export default class Proxy extends EventEmitter {
           resp._setHttpSource(responseFromServer)
         }
         try { yield this._runIntercepts('response', cycle) }
-        catch(ex) { this._emitError(ex, 'response') }
+        catch (ex) { this._emitError(ex, 'response') }
         yield cycle._sendToClient(toClient)
         try { yield this._runIntercepts('response-sent', cycle) }
-        catch(ex) { this._emitError(ex, 'response-sent') }
+        catch (ex) { this._emitError(ex, 'response-sent') }
       }).catch(ex => {
         this.emit('error', ex)
         this.emit('log', {
@@ -222,9 +222,27 @@ export default class Proxy extends EventEmitter {
           clientSocket.write(cxnEstablished)
           serverSocket.write(head)
           clientSocket
-          .pipe(serverSocket)
-          .pipe(clientSocket)
+            .pipe(serverSocket)
+            .pipe(clientSocket)
         })
+
+        serverSocket.on('error', err => {
+          clientSocket.destroy();
+          this.emit('log', {
+            level: 'warn',
+            message: 'proxy server serverSocket error: ' + err.message,
+            error: err
+          });
+        });
+
+        clientSocket.on('error', err => {
+          serverSocket.destroy(err);
+          this.emit('log', {
+            level: 'warn',
+            message: 'proxy server clientSocket error: ' + err.message,
+            error: err
+          });
+        });
       })
 
       this._tlsSpoofingServer = https.createServer({
@@ -248,6 +266,14 @@ export default class Proxy extends EventEmitter {
         })
         toServer.on('error', (err) => {
           this.emit('error', err);
+        });
+        fromClient.on('error', err => {
+          toServer.destroy();
+          this.emit('log', {
+            level: 'warn',
+            message: 'proxy server fromClient error: ' + err.message,
+            error: err
+          });
         });
         fromClient.pipe(toServer)
       })
@@ -315,9 +341,9 @@ export default class Proxy extends EventEmitter {
   log(events, cb) {
     let listenTo = {}
     events.split(/\s/)
-    .map(s => s.trim())
-    .filter(s => !!s)
-    .forEach(s => listenTo[s] = true)
+      .map(s => s.trim())
+      .filter(s => !!s)
+      .forEach(s => listenTo[s] = true)
     let writable
     if (!cb) {
       writable = process.stderr
@@ -385,7 +411,7 @@ export default class Proxy extends EventEmitter {
       , self = this
       , intercepts = this._intercepts[phase]
 
-    return co(function*() {
+    return co(function* () {
       cycle._setPhase(phase)
       for (let intercept of intercepts) {
         const stopLogging = self._logLongTakingIntercept(phase, req)
