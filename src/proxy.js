@@ -227,21 +227,21 @@ export default class Proxy extends EventEmitter {
         })
 
         serverSocket.on('error', err => {
-          clientSocket.destroy();
           this.emit('log', {
             level: 'warn',
             message: 'proxy server serverSocket error: ' + err.message,
             error: err
           });
+          clientSocket.destroy();
         });
 
         clientSocket.on('error', err => {
-          serverSocket.destroy(err);
           this.emit('log', {
             level: 'warn',
             message: 'proxy server clientSocket error: ' + err.message,
             error: err
           });
+          serverSocket.destroy(err);
         });
       })
 
@@ -263,18 +263,27 @@ export default class Proxy extends EventEmitter {
           toClient.writeHead(fromServer.statusCode, fromServer.headers)
           fromServer.pipe(toClient)
           toServer.end();
-        })
-        toServer.on('error', (err) => {
-          this.emit('error', err);
         });
+
+        toServer.on('error', (err) => {
+          this.emit('log', {
+            level: 'warn',
+            message: 'proxy server toServer error: ' + err.message,
+            error: err
+          });
+          toServer.abort();
+          toClient.connection.destroy(err);
+        });
+
         fromClient.on('error', err => {
-          toServer.destroy();
           this.emit('log', {
             level: 'warn',
             message: 'proxy server fromClient error: ' + err.message,
             error: err
           });
+          toServer.abort();
         });
+
         fromClient.pipe(toServer)
       })
 
