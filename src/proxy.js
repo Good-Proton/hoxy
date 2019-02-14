@@ -337,6 +337,25 @@ export default class Proxy extends EventEmitter {
     intercept = asIntercept(opts, intercept) // TODO: test asIntercept this, args, async
     intercept = otherIntercept(opts, intercept) // TODO: test otherIntercept this, args, async
     this._intercepts[phase].push(intercept)
+    return intercept;
+  }
+
+  stopIntercept(opts, intercept) {
+    // TODO: test string versus object
+    // TODO: test opts is undefined
+    if (typeof opts === 'string') {
+      opts = { phase: opts }
+    }
+    let phase = opts.phase
+    if (!this._intercepts.hasOwnProperty(phase)) {
+      throw new Error(phase ? 'invalid phase ' + phase : 'missing phase')
+    }
+
+    const i = this._intercepts[phase].findIndex(intercept);
+    if (i != -1) {
+      this._intercepts[phase].splice(i, 1);
+      return true;
+    }
   }
 
   close() {
