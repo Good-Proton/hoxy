@@ -43,8 +43,8 @@ import wait from '../../src/wait'
 class Sender {
 
   constructor(reqInfo, ignoreInterceptorErrors, proxyOpts) {
-    this._serverHandler = (req, resp) => { resp.end('') }
-    this._clientHandler = () => {}
+    this._serverHandler = function*(req, resp) { resp.end('') }
+    this._clientHandler = function*(resp) { }
     this._interceptHandlers = []
     this._prom = new Promise((resolve, reject) => {
       let proxy = this._proxy = hoxy.createServer(proxyOpts)
