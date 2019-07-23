@@ -351,7 +351,7 @@ export default class Proxy extends EventEmitter {
       throw new Error(phase ? 'invalid phase ' + phase : 'missing phase')
     }
 
-    const i = this._intercepts[phase].findIndex(intercept);
+    const i = this._intercepts[phase].indexOf(intercept);
     if (i != -1) {
       this._intercepts[phase].splice(i, 1);
       return true;
