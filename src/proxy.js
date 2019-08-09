@@ -433,11 +433,10 @@ export default class Proxy extends EventEmitter {
   }
 
   _runIntercepts(phase, cycle) {
-
     let req = cycle._request
       , resp = cycle._response
       , self = this
-      , intercepts = this._intercepts[phase]
+      , intercepts = this._intercepts[phase].slice();
 
     return co(function* () {
       cycle._setPhase(phase)
