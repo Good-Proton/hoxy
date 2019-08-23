@@ -175,9 +175,9 @@ export default class Proxy extends EventEmitter {
           })
         } else {
           try { 
-			const responseFromServer = yield partiallyFulfilledRequest.receive();
-			resp._setHttpSource(responseFromServer)
-		  } catch (ex) {
+            const responseFromServer = yield partiallyFulfilledRequest.receive();
+            resp._setHttpSource(responseFromServer)
+          } catch (ex) {
             this.emit('log', {
               level: 'warn',
               message: `connection error: ` + ex.message,
@@ -186,7 +186,7 @@ export default class Proxy extends EventEmitter {
             toClient.writeHead(502, {
               'x-proxy-original-error': JSON.stringify({ code: ex.code, stack: ex.stack })
             }).flushHeaders();
-            toClient.connection.destroy(err);
+            toClient.connection.destroy(ex);
             return
           }
         }
