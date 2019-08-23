@@ -174,8 +174,21 @@ export default class Proxy extends EventEmitter {
             message: `server fetch skipped for ${req.fullUrl()}`,
           })
         } else {
-          let responseFromServer = yield partiallyFulfilledRequest.receive()
-          resp._setHttpSource(responseFromServer)
+          try { 
+			const responseFromServer = yield partiallyFulfilledRequest.receive();
+			resp._setHttpSource(responseFromServer)
+		  } catch (ex) {
+            this.emit('log', {
+              level: 'warn',
+              message: `connection error: ` + ex.message,
+            })
+
+            toClient.writeHead(502, {
+              'x-proxy-original-error': JSON.stringify({ code: ex.code, stack: ex.stack })
+            }).flushHeaders();
+            toClient.connection.destroy(err);
+            return
+          }
         }
         try { yield this._runIntercepts('response', cycle) }
         catch (ex) { this._emitError(ex, 'response') }
