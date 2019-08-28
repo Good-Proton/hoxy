@@ -3,12 +3,13 @@
  * MIT License. See mit-license.txt for more info.
  */
 
+import assert from 'assert'
 import hoxy from '../src/main'
 import http from 'http'
 
 describe('non-existent servers', function(){
 
-  it('should emit an error when forwarding a request to a non-existent server', done => {
+  it('should respond with 502 and `x-proxy-original-error` header', done => {
 
     const proxy = hoxy.createServer({
       reverse: 'http://sdfkjhsdfdgjhhfs:8888',
@@ -19,12 +20,12 @@ describe('non-existent servers', function(){
         hostname: address,
         port: port,
         path: '/',
-      }, () => {
-        done(new Error('callback not expected'))
-      }).on('error', done)
+      }, (resp) => {
+          assert.equal(resp.statusCode, 502)
+          assert.ok(resp.headers['x-proxy-original-error'])
+          done();
+      }).on('error', e => done(e))
     })
-    proxy.on('error', () => {
-      done()
-    })
+    proxy.on('error', e => done(e))
   })
 })

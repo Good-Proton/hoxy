@@ -6,6 +6,9 @@
 import { Proxy } from '../src/main'
 import send from './lib/send'
 import assert from 'assert'
+import fs from 'fs'
+import path from 'path'
+import pem from 'pem'
 
 describe('hoxy', function() {
 

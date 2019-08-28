@@ -23,6 +23,7 @@ import adapt from 'ugly-adapter'
 import wait from './wait'
 import task from './task'
 import UrlPath from './url-path'
+import HttpsProxyAgent from 'https-proxy-agent';
 
 let staticServer = (() => {
 
@@ -52,17 +53,23 @@ class ProvisionableRequest {
 
   constructor(opts) {
     this._respProm = task()
-    let h = (/https/i).test(opts.protocol) ? https : http
-    if (opts.proxy) {
-      let proxyInfo = url.parse(opts.proxy)
-        , proxyPort = proxyInfo.port
-        , proxyHostname = proxyInfo.hostname
-        , proxyPath = 'http://' + opts.hostname + (opts.port ? ':' + opts.port : '') + opts.path
-      opts.hostname = proxyHostname
-      opts.port = proxyPort
-      opts.path = proxyPath
+    if (/https/i.test(opts.protocol)) {
+      if (opts.proxy) {
+        opts.agent = new HttpsProxyAgent(opts.proxy)
+      }
+      this._writable = https.request(opts, this._respProm.resolve)
+    } else {
+      if (opts.proxy) {
+        let proxyInfo = url.parse(opts.proxy)
+          , proxyPort = proxyInfo.port
+          , proxyHostname = proxyInfo.hostname
+          , proxyPath = 'http://' + opts.hostname + (opts.port ? ':' + opts.port : '') + opts.path
+        opts.hostname = proxyHostname
+        opts.port = proxyPort
+        opts.path = proxyPath
+      }
+      this._writable = http.request(opts, this._respProm.resolve)
     }
-    this._writable = h.request(opts, this._respProm.resolve)
     this._writable.on('error', this._respProm.reject)
   }
 
@@ -98,14 +105,14 @@ function check(strategy, file, req, upstreamProxy) {
   let parsed = url.parse(file)
   file = parsed.pathname // stripped of query string.
 
-  return co(function*() {
+  return co(function* () {
     if (strategy !== 'mirror') {
       return false
     }
     try {
       yield adapt(fs.stat, file)
       return false
-    } catch(ex) {
+    } catch (ex) {
       // file does not exist, so continue
     }
     // TODO: test coverage for mkdirp
@@ -162,7 +169,7 @@ export default class Cycle extends EventEmitter {
 
   serve(opts) {
 
-    return co.call(this, function*() {
+    return co.call(this, function* () {
 
       // First, get all our ducks in a row WRT to
       // options, setting variables, etc.
@@ -203,7 +210,7 @@ export default class Cycle extends EventEmitter {
           headers: headers,
           path: pPath.toUrlPath(),
         }, resolve)
-        .on('error', reject)
+          .on('error', reject)
       })
       let code = staticResp.statusCode
         , useResponse
@@ -258,7 +265,7 @@ export default class Cycle extends EventEmitter {
     if (resp._populated) {
       return Promise.resolve(undefined)
     }
-    return co.call(this, function*() { // return the outer promise
+    return co.call(this, function* () { // return the outer promise
       let provisionableReq = new ProvisionableRequest({
         protocol: req.protocol,
         proxy: upstreamProxy,
@@ -297,7 +304,7 @@ export default class Cycle extends EventEmitter {
       , rLatency = rSlow.latency || 0
       , pLatency = pSlow.latency || 0
       , latency = Math.max(pLatency, rLatency)
-    return co.call(this, function*() {
+    return co.call(this, function* () {
       if (latency > 0) {
         yield wait(latency)
       }
