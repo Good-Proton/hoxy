@@ -89,13 +89,11 @@ let otherIntercept = (() => {
         , isMatch = 1
         , accept = req.headers['accept'] || ''
 
-      isMatch &= isReq
-        ? opts.accept === undefined ? true
-          : opts.accept instanceof RegExp ? opts.accept.test(accept)
-            : typeof opts.accept == 'string' ? (
-              accept == opts.accept || accept.split(',').find(a => a.trim() == opts.accept)
-            ) : false
-        : true
+      isMatch &= opts.accept === undefined ? true
+        : opts.accept instanceof RegExp ? opts.accept.test(accept)
+          : typeof opts.accept == 'string' ? (
+            accept == opts.accept || accept.split(',').find(a => a.trim() == opts.accept)
+          ) : false
       isMatch &= test(opts.contentType, contentType)
       isMatch &= test(opts.mimeType, mimeType)
       isMatch &= test(opts.requestContentType, reqContentType)
@@ -182,7 +180,7 @@ export default class Proxy extends EventEmitter {
             message: `server fetch skipped for ${req.fullUrl()}`,
           })
         } else {
-          try { 
+          try {
             const responseFromServer = yield partiallyFulfilledRequest.receive();
             resp._setHttpSource(responseFromServer)
           } catch (ex) {
