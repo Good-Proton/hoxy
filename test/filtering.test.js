@@ -22,7 +22,6 @@ function roundTrip(opts) {
 }
 
 describe('filtering', function() {
-
   it('should filter based on string matches on method', () => {
     let expect = finish()
     return roundTrip({
@@ -701,5 +700,47 @@ describe('filtering', function() {
     })
     .promise();
     assert.ok(!hit);
+  })
+
+  it('should filter based on string matches on accept', () => {
+    let expect = finish()
+    return roundTrip({
+      request: {
+        path: 'http://example.com/foobar',
+        method: 'GET',
+        headers: { 'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3' },
+      },
+      intercepts: [{
+        opts: { phase: 'request', accept: 'text/event-stream' },
+        callback: function () { throw new Error('should not have called intercept') },
+      }, {
+        opts: { phase: 'request', accept: 'text/html' },
+        callback: function () { expect.done() },
+      }, {
+        opts: { phase: 'request', accept: 'application/xhtml+xml' },
+        callback: function () { expect.done() },
+      }, {
+        opts: { phase: 'request', accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3' },
+        callback: function () { expect.done() },
+      }],
+    }).then(() => expect.now())
+  })
+
+  it('should filter based on string matches on accept', () => {
+    let expect = finish()
+    return roundTrip({
+      request: {
+        path: 'http://example.com/foobar',
+        method: 'GET',
+        headers: { 'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3' },
+      },
+      intercepts: [{
+        opts: { phase: 'request', accept: /text\/event-stream/i },
+        callback: function () { throw new Error('should not have called intercept') },
+      }, {
+        opts: { phase: 'request', accept: /text\/html/i },
+        callback: function () { expect.done() },
+      }],
+    }).then(() => expect.now())
   })
 })

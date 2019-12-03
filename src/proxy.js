@@ -87,7 +87,15 @@ let otherIntercept = (() => {
         , testStatus = isReq ? undefined : opts.status
         , actualStatus = isReq ? undefined : resp.statusCode
         , isMatch = 1
+        , accept = req.headers['accept'] || ''
 
+      isMatch &= isReq
+        ? opts.accept === undefined ? true
+          : opts.accept instanceof RegExp ? opts.accept.test(accept)
+            : typeof opts.accept == 'string' ? (
+              accept == opts.accept || accept.split(',').find(a => a.trim() == opts.accept)
+            ) : false
+        : true
       isMatch &= test(opts.contentType, contentType)
       isMatch &= test(opts.mimeType, mimeType)
       isMatch &= test(opts.requestContentType, reqContentType)
