@@ -55,7 +55,19 @@ class ProvisionableRequest {
     this._respProm = task()
     if (/https/i.test(opts.protocol)) {
       if (opts.proxy) {
-        opts.agent = new HttpsProxyAgent(opts.proxy)
+        const parsedOpts = _url.default.parse(opts.proxy);
+        const proxyAgentConfig = {
+          host: parsedOpts.hostname,
+          port: parsedOpts.port,
+          protocol: parsedOpts.protocol,
+        }
+        if(opts.auth){
+          proxyAgentConfig.headers ={
+            ['proxy-authorization']:`Basic ${new Buffer.from(opts.auth,'utf-8').toString('base64')}`
+          }
+        }
+
+        opts.agent = new HttpsProxyAgent(proxyAgentConfig)
       }
       this._writable = https.request(opts, this._respProm.resolve)
     } else {
@@ -258,6 +270,7 @@ export default class Cycle extends EventEmitter {
     let req = this._request._finalize()
       , resp = this._response
       , upstreamProxy = this._proxy._upstreamProxy
+      , auth = this._proxy._auth
       , source = req._source
       , pSlow = this._proxy._slow || {}
       , rSlow = req.slow() || {}
@@ -269,6 +282,7 @@ export default class Cycle extends EventEmitter {
       let provisionableReq = new ProvisionableRequest({
         protocol: req.protocol,
         proxy: upstreamProxy,
+        auth: auth,
         hostname: req.hostname,
         port: req.port || req._getDefaultPort(),
         method: req.method,

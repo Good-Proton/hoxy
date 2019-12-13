@@ -142,6 +142,14 @@ export default class Proxy extends EventEmitter {
       this._upstreamProxy = proxy
     }
 
+    if (opts.auth) {
+      if (/.+:.+/i.test(opts.auth)) {
+        this._auth = opts.auth;
+      } else {
+        throw new InitializeError('wrong proxy auth');
+      }
+    }
+
     if (opts.slow) {
       this.slow(opts.slow)
     }
