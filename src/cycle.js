@@ -55,16 +55,19 @@ class ProvisionableRequest {
     this._respProm = task()
     if (/https/i.test(opts.protocol)) {
       if (opts.proxy) {
-        const parsedOpts = _url.default.parse(opts.proxy);
+        const parsedOpts = url.parse(opts.proxy);
         const proxyAgentConfig = {
           host: parsedOpts.hostname,
           port: parsedOpts.port,
           protocol: parsedOpts.protocol,
         }
         if(opts.auth){
-          proxyAgentConfig.headers ={
-            ['proxy-authorization']:`Basic ${new Buffer.from(opts.auth,'utf-8').toString('base64')}`
-          }
+
+          const base64Auth = Buffer.from(opts.auth, 'utf-8').toString('base64');
+
+          proxyAgentConfig.headers = {
+            ['proxy-authorization']: `Basic ${base64Auth}`,
+          };
         }
 
         opts.agent = new HttpsProxyAgent(proxyAgentConfig)
