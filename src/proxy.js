@@ -87,12 +87,12 @@ let otherIntercept = (() => {
         , testStatus = isReq ? undefined : opts.status
         , actualStatus = isReq ? undefined : resp.statusCode
         , isMatch = 1
-        , accept = req.headers['accept'] || ''
+        , accept = req.headers.accept || ''
 
       isMatch &= opts.accept === undefined ? true
         : opts.accept instanceof RegExp ? opts.accept.test(accept)
-          : typeof opts.accept == 'string' ? (
-            accept == opts.accept || !!accept.split(',').find(a => a.trim() == opts.accept)
+          : typeof opts.accept === 'string' ? (
+            accept === opts.accept || !!accept.split(',').find(a => a.trim() === opts.accept)
           ) : false
       isMatch &= test(opts.contentType, contentType)
       isMatch &= test(opts.mimeType, mimeType)
@@ -136,7 +136,7 @@ export default class Proxy extends EventEmitter {
       if (!/^https?:\/\//.test(proxy)) {
         proxy = 'http://' + proxy
       }
-      if (!/^https?:\/\/[^:]+:\d+$/.test(proxy)) {
+      if (!/^https?:\/\/(?:[^:@]+:[^:@]+@)?[^:@]+:\d+$/.test(proxy)) {
         throw new Error(`invalid value for upstreamProxy: "${opts.upstreamProxy}"`)
       }
       this._upstreamProxy = proxy
@@ -190,7 +190,7 @@ export default class Proxy extends EventEmitter {
             })
 
             toClient.writeHead(502, {
-              'x-proxy-original-error': JSON.stringify({ code: ex.code, stack: ex.stack })
+              'x-proxy-original-error': JSON.stringify({ code: ex.code, stack: ex.stack }),
             }).flushHeaders();
             toClient.connection.destroy(ex);
             return
@@ -249,7 +249,7 @@ export default class Proxy extends EventEmitter {
           this.emit('log', {
             level: 'warn',
             message: 'proxy server serverSocket error: ' + err.message,
-            error: err
+            error: err,
           });
           clientSocket.destroy();
         });
@@ -258,7 +258,7 @@ export default class Proxy extends EventEmitter {
           this.emit('log', {
             level: 'warn',
             message: 'proxy server clientSocket error: ' + err.message,
-            error: err
+            error: err,
           });
           serverSocket.destroy(err);
         });
@@ -288,7 +288,7 @@ export default class Proxy extends EventEmitter {
           this.emit('log', {
             level: 'warn',
             message: 'proxy server toServer error: ' + err.message,
-            error: err
+            error: err,
           });
           toServer.abort();
           toClient.connection.destroy(err);
@@ -298,7 +298,7 @@ export default class Proxy extends EventEmitter {
           this.emit('log', {
             level: 'warn',
             message: 'proxy server fromClient error: ' + err.message,
-            error: err
+            error: err,
           });
           toServer.abort();
         });
@@ -371,7 +371,7 @@ export default class Proxy extends EventEmitter {
     }
 
     const i = this._intercepts[phase].indexOf(intercept);
-    if (i != -1) {
+    if (i !== -1) {
       this._intercepts[phase].splice(i, 1);
       return true;
     }
