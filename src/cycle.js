@@ -61,9 +61,9 @@ class ProvisionableRequest {
           port: parsedOpts.port,
           protocol: parsedOpts.protocol,
         }
-        if(opts.auth){
+        if(parsedOpts.auth){
 
-          const base64Auth = Buffer.from(opts.auth, 'utf-8').toString('base64');
+          const base64Auth = Buffer.from(parsedOpts.auth, 'utf-8').toString('base64');
 
           proxyAgentConfig.headers = {
             ['proxy-authorization']: `Basic ${base64Auth}`,
@@ -273,7 +273,6 @@ export default class Cycle extends EventEmitter {
     let req = this._request._finalize()
       , resp = this._response
       , upstreamProxy = this._proxy._upstreamProxy
-      , auth = this._proxy._auth
       , source = req._source
       , pSlow = this._proxy._slow || {}
       , rSlow = req.slow() || {}
@@ -285,7 +284,6 @@ export default class Cycle extends EventEmitter {
       let provisionableReq = new ProvisionableRequest({
         protocol: req.protocol,
         proxy: upstreamProxy,
-        auth: auth,
         hostname: req.hostname,
         port: req.port || req._getDefaultPort(),
         method: req.method,
