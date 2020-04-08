@@ -72,7 +72,6 @@ class ProvisionableRequest {
 
         opts.agent = new HttpsProxyAgent(proxyAgentConfig)
       }
-      this._writable = https.request(opts, this._respProm.resolve)
     } else {
       if (opts.proxy) {
         let proxyInfo = url.parse(opts.proxy)
@@ -83,8 +82,9 @@ class ProvisionableRequest {
         opts.port = proxyPort
         opts.path = proxyPath
       }
-      this._writable = http.request(opts, this._respProm.resolve)
     }
+    this._writable = http.request(opts)
+    this._writable.on('response', this._respProm.resolve)
     this._writable.on('error', this._respProm.reject)
   }
 
@@ -93,9 +93,18 @@ class ProvisionableRequest {
       if (!readable || typeof readable === 'string') {
         this._writable.end(readable || '', resolve)
       } else {
-        readable.on('error', reject)
-        readable.on('end', resolve)
-        readable.pipe(this._writable)
+        if (this._respProm.isPending) {
+          this._respProm.then(() => reject(new Error('unknown')), reject)
+          readable.on('error', reject)
+          readable.on('end', resolve)
+          readable.pipe(this._writable)
+        } else if (this._respProm.isResolved) {
+          resolve()
+        } else if (this._respProm.isRejected) {
+          reject(this._respProm.value)
+        } else {
+          reject(new Error('unknown'))
+        }
       }
     })
   }

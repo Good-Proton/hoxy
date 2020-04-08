@@ -8,7 +8,7 @@ import streams from '../src/streams'
 import assert from 'assert'
 import http from 'http'
 
-describe('reverse', function() {
+describe('reverse', function () {
 
   it('should accept a valid reverse proxy', () => {
     let proxy = new Proxy({
@@ -48,7 +48,7 @@ describe('reverse', function() {
       let proxy = new Proxy({
         reverse: `http://localhost:${serverAddr.port}`,
       }).listen(0, 'localhost', () => {
-        proxy.intercept('request', function(req) {
+        proxy.intercept('request', function (req) {
           req.headers['x-foo'] = 'bar'
         })
         proxy.on('error', done)

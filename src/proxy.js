@@ -36,12 +36,12 @@ let asHandlers = {
         // TODO: test to ensure that parse errors here fail gracefully.
         r.params = querystring.parse(r._source.toString())
     },
-    'buffer': () => {},
-    'string': () => {},
+    'buffer': () => { },
+    'string': () => { },
 }
 
 function wrapAsync(intercept) {
-    return function(req, resp, cycle) {
+    return function (req, resp, cycle) {
         let result = intercept.call(this, req, resp, cycle)
         if (result && typeof result.then === 'function') {
             return result
@@ -55,7 +55,7 @@ function wrapAsync(intercept) {
 
 function asIntercept(opts, intercept) {
     if (opts.as) {
-        return co.wrap(function*(req, resp, cycle) {
+        return co.wrap(function* (req, resp, cycle) {
             let r = opts.phase === 'request' ? req : resp
             yield r._load()
             asHandlers[opts.as](r)
@@ -76,8 +76,8 @@ let otherIntercept = (() => {
         if (isUrl) { return getUrlTester(tester)(testee) }
         return tester == testee // eslint-disable-line eqeqeq
     }
-    return function(opts, intercept) {
-        return function(req, resp, cycle) {
+    return function (opts, intercept) {
+        return function (req, resp, cycle) {
 
             let isReq = opts.phase === 'request' || opts.phase === 'request-sent',
                 reqContentType = req.headers['content-type'],
@@ -93,9 +93,9 @@ let otherIntercept = (() => {
 
             isMatch &= opts.accept === undefined ? true :
                 opts.accept instanceof RegExp ? opts.accept.test(accept) :
-                typeof opts.accept === 'string' ? (
-                    accept === opts.accept || !!accept.split(',').find(a => a.trim() === opts.accept)
-                ) : false
+                    typeof opts.accept === 'string' ? (
+                        accept === opts.accept || !!accept.split(',').find(a => a.trim() === opts.accept)
+                    ) : false
             isMatch &= test(opts.contentType, contentType)
             isMatch &= test(opts.mimeType, mimeType)
             isMatch &= test(opts.requestContentType, reqContentType)
@@ -168,61 +168,62 @@ export default class Proxy extends EventEmitter {
 
             cycle.on('log', log => this.emit('log', log))
 
-            co.call(this, function*() {
+            co.call(this, function* () {
                 req._setHttpSource(fromClient, opts.reverse)
-                try { yield this._runIntercepts('request', cycle) } catch (ex) { this._emitError(ex, 'request') }
-                let partiallyFulfilledRequest = yield cycle._sendToServer()
-                try { yield this._runIntercepts('request-sent', cycle) } catch (ex) { this._emitError(ex, 'request-sent') }
-                if (partiallyFulfilledRequest === undefined) {
-                    this.emit('log', {
-                        level: 'debug',
-                        message: `server fetch skipped for ${req.fullUrl()}`,
-                    })
-                } else {
-                    try {
+                try {
+                    try { yield this._runIntercepts('request', cycle) } catch (ex) { this._emitError(ex, 'request') }
+                    let partiallyFulfilledRequest = yield cycle._sendToServer()
+                    try { yield this._runIntercepts('request-sent', cycle) } catch (ex) { this._emitError(ex, 'request-sent') }
+
+                    if (partiallyFulfilledRequest === undefined) {
+                        this.emit('log', {
+                            level: 'debug',
+                            message: `server fetch skipped for ${req.fullUrl()}`,
+                        })
+                    } else {
                         const responseFromServer = yield partiallyFulfilledRequest.receive();
                         resp._setHttpSource(responseFromServer)
-                    } catch (ex) { // Catch upstreamProxy and general connection failures
-                        this.emit('log', {
-                            level: 'warn',
-                            message: `connection error: ` + ex.message,
-                        })
-
-                        // create fake IncomingMessage to simulate connection error
-                        const fake = stream.Readable.from([''], { objectMode: false });
-                        Object.assign(fake, {
-                            httpVersion: req.httpVersion,
-                            statusCode: 502,
-                            headers: {
-                                'x-proxy-original-error': JSON.stringify({
-                                    code: ex.code,
-                                    stack: ex.stack
-                                })
-                            }
-                        });
-                        resp._setHttpSource(fake);
-
-                        // run interceptors on fake
-                        try {
-                            yield this._runIntercepts('response', cycle);
-                        } catch (ex) {
-                            this._emitError(ex, 'response');
-                        }
-
-                        // send error to client (not related to fake)
-                        toClient.writeHead(502, {
-                            'x-proxy-original-error': JSON.stringify({ code: ex.code, stack: ex.stack }),
-                        }).flushHeaders();
-                        toClient.connection.destroy(ex);
-
-                        try {
-                            yield this._runIntercepts('response-sent', cycle);
-                        } catch (ex) {
-                            this._emitError(ex, 'response-sent');
-                        }
-
-                        return
                     }
+                } catch (ex) { // Catch upstreamProxy and general connection failures
+                    this.emit('log', {
+                        level: 'warn',
+                        message: `connection error: ` + ex.message,
+                    })
+
+                    // create fake IncomingMessage to simulate connection error
+                    const fake = stream.Readable.from([''], { objectMode: false });
+                    Object.assign(fake, {
+                        httpVersion: req.httpVersion,
+                        statusCode: -500,
+                        headers: {
+                            'x-proxy-original-error': JSON.stringify({
+                                code: ex.code,
+                                stack: ex.stack
+                            })
+                        }
+                    });
+                    resp._setHttpSource(fake);
+
+                    // run interceptors on fake
+                    try {
+                        yield this._runIntercepts('response', cycle);
+                    } catch (ex) {
+                        this._emitError(ex, 'response');
+                    }
+
+                    // send error to client (not related to fake)
+                    /* toClient.writeHead(502, {
+                        'x-proxy-original-error': JSON.stringify({ code: ex.code, stack: ex.stack }),
+                    }).flushHeaders(); */
+                    toClient.connection.destroy(ex);
+
+                    try {
+                        yield this._runIntercepts('response-sent', cycle);
+                    } catch (ex) {
+                        this._emitError(ex, 'response-sent');
+                    }
+
+                    return
                 }
                 try { yield this._runIntercepts('response', cycle) } catch (ex) { this._emitError(ex, 'response') }
                 yield cycle._sendToClient(toClient)
@@ -480,7 +481,7 @@ export default class Proxy extends EventEmitter {
             self = this,
             intercepts = this._intercepts[phase].slice();
 
-        return co(function*() {
+        return co(function* () {
             cycle._setPhase(phase)
             for (let intercept of intercepts) {
                 const stopLogging = self._logLongTakingIntercept(phase, req)

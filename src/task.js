@@ -8,7 +8,24 @@ export default function() {
     resolve = res
     reject = rej
   })
-  p.resolve = resolve
-  p.reject = reject
+  p.resolve = (arg) => {
+    p.isPending = false
+    p.isResolved = true
+    p.resolve = () => { }
+    p.reject = () => { }
+    p.value = arg
+    resolve(arg)
+  }
+  p.reject = (arg) => {
+    p.isPending = false
+    p.isRejected = true
+    p.resolve = () => { }
+    p.reject = () => { }
+    p.value = arg
+    reject(arg)
+  }
+  p.isResolved = false
+  p.isRejected = false
+  p.isPending = true
   return p
 }

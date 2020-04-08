@@ -10,7 +10,7 @@
   "main": "./lib/main",
   "scripts": {
     "prepublish": "npm run compile",
-    "test": "mocha --compilers js:@babel/register --timeout 300000",
+    "test": "mocha --require @babel/register --exit --timeout 300000",
     "compile": "babel src --out-dir lib",
     "lint": "eslint ./src",
     "docs": "babel-node ./dev-bin/build.js > ./index.html",
@@ -54,6 +54,6 @@
     "@babel/register": "^7.0.0",
     "babel-plugin-add-module-exports": "^1.0.0",
     "eslint": "^0.24.1",
-    "mocha": "^2.2.5"
+    "mocha": "^7.1.1"
   }
 }
