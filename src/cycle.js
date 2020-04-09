@@ -72,6 +72,7 @@ class ProvisionableRequest {
 
         opts.agent = new HttpsProxyAgent(proxyAgentConfig)
       }
+      this._writable = https.request(opts)
     } else {
       if (opts.proxy) {
         let proxyInfo = url.parse(opts.proxy)
@@ -82,8 +83,8 @@ class ProvisionableRequest {
         opts.port = proxyPort
         opts.path = proxyPath
       }
+      this._writable = http.request(opts)
     }
-    this._writable = http.request(opts)
     this._writable.on('response', this._respProm.resolve)
     this._writable.on('error', this._respProm.reject)
   }
