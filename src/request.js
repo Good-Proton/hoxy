@@ -229,8 +229,9 @@ export default class Request extends Body {
     }
 
     Object.keys(this.headers).forEach(name => {
+      const lowerCaseName = name.toLowerCase();
       // TODO: test
-      if (removeHeaders.hasOwnProperty(name)) {
+      if (removeHeaders.hasOwnProperty(lowerCaseName)) {
         delete this.headers[name]
       } else if (this.headers[name] === undefined){
         delete this.headers[name]
