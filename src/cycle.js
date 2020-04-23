@@ -66,7 +66,7 @@ class ProvisionableRequest {
           const base64Auth = Buffer.from(parsedOpts.auth, 'utf-8').toString('base64');
 
           proxyAgentConfig.headers = {
-            ['proxy-authorization']: `Basic ${base64Auth}`,
+            ['Proxy-Authorization']: `Basic ${base64Auth}`,
           };
         }
 
