@@ -39,11 +39,11 @@ export default class Request extends Body {
   /**
    * Getter/setter for HTTP protocol, e.g. 'http:'
    */
-  get protocol(){
+  get protocol() {
     return this._getRawDataItem('protocol')
   }
 
-  set protocol(protocol){
+  set protocol(protocol) {
     if (!validProtocols.hasOwnProperty(protocol)) {
       throw new Error('invalid protocol: ' + protocol) // TODO: test this
     }
@@ -53,12 +53,12 @@ export default class Request extends Body {
   /**
    * Getter/setter for host name. Does not incude port.
    */
-  get hostname(){
+  get hostname() {
     return this._getRawDataItem('hostname')
   }
 
-  set hostname(hostname){
-    if (!hostname){
+  set hostname(hostname) {
+    if (!hostname) {
       throw new Error('invalid hostname: ' + hostname) // TODO: test this
     }
     this._setRawDataItem('hostname', hostname)
@@ -67,16 +67,16 @@ export default class Request extends Body {
   /**
    * Getter/setter for port.
    */
-  get port(){
+  get port() {
     return this._getRawDataItem('port')
   }
 
-  set port(port){
+  set port(port) {
     if (port === undefined) {
       this._setRawDataItem('port', undefined)
     } else {
       let parsedPort = parseInt(port)
-      if (!parsedPort){
+      if (!parsedPort) {
         throw new Error('invalid port: ' + port) // TODO: test this
       }
       this._setRawDataItem('port', parsedPort)
@@ -86,12 +86,12 @@ export default class Request extends Body {
   /**
    * Getter/setter for HTTP method.
    */
-  get method(){
+  get method() {
     return this._getRawDataItem('method')
   }
 
-  set method(method){
-    if (!method){
+  set method(method) {
+    if (!method) {
       throw new Error('invalid method') // TODO: test this
     }
     this._setRawDataItem('method', method.toUpperCase())
@@ -100,12 +100,12 @@ export default class Request extends Body {
   /**
    * Getter/setter for URL. Root-relative.
    */
-  get url(){
+  get url() {
     return this._getRawDataItem('url')
   }
 
-  set url(aUrl){
-    if (!/^\//.test(aUrl)){
+  set url(aUrl) {
+    if (!/^\//.test(aUrl)) {
       throw new Error('invalid url, must start with /') // TODO: test this
     }
     this._setRawDataItem('url', aUrl)
@@ -114,13 +114,13 @@ export default class Request extends Body {
   /**
    * Getter/setter for URL. Root-relative.
    */
-  get query(){
+  get query() {
     const aUrl = this._getRawDataItem('url')
     const pUrl = url.parse(aUrl, true)
     return pUrl.query || {}
   }
 
-  set query(params){
+  set query(params) {
     assert(typeof params === 'object', 'params not an object')
     let aUrl = this._getRawDataItem('url')
     const pUrl = url.parse(aUrl, true)
@@ -133,16 +133,16 @@ export default class Request extends Body {
   /**
    * Getter/setter for HTTP request header object.
    */
-  get headers(){
+  get headers() {
     return this._getRawDataItem('headers')
   }
 
-  set headers(headers){
+  set headers(headers) {
     this._setRawDataItem('headers', _.extend({}, headers))
   }
 
-  fullUrl(u){
-    if (u){
+  fullUrl(u) {
+    if (u) {
       let purl = url.parse(u)
       if (purl.protocol) { this.protocol = purl.protocol }
       if (purl.hostname) { this.hostname = purl.hostname }
@@ -160,27 +160,27 @@ export default class Request extends Body {
     }
   }
 
-  _setHttpSource(inReq, reverse){
+  _setHttpSource(inReq, reverse) {
     let u = inReq.url
-    if (reverse){
+    if (reverse) {
       u = url.resolve(reverse, u)
     }
     let purl = url.parse(u)
-    if (reverse){
+    if (reverse) {
       inReq.headers.host = purl.host
-      if (!purl.protocol){
+      if (!purl.protocol) {
         throw new Error('missing protocol on reverse proxy')
       }
     }
     let host = (() => {
       let aHost = inReq.headers.host
       let result = {}
-      if (aHost){
+      if (aHost) {
         let matches = aHost.match(/^([^:]+)(:([\d]+))?$/)
-        if (matches){
+        if (matches) {
           result.name = matches[1]
           let port = parseInt(matches[3])
-          if (port){
+          if (port) {
             result.port = port
           }
         }
@@ -192,7 +192,7 @@ export default class Request extends Body {
     this.protocol = purl.protocol || 'http:'
     this.hostname = purl.hostname || host.name
     let port = purl.port || host.port
-    if (port){
+    if (port) {
       this.port = port
     }
     //this.port = purl.port || host.port || this._getDefaultPort()
@@ -205,26 +205,36 @@ export default class Request extends Body {
   /**
    * Returns the default port given the current protocol.
    */
-  _getDefaultPort(){
+  _getDefaultPort() {
     return this.protocol === 'https:' ? 443 : 80
   }
 
   // TODO: emit debug log events for things that are changed.
-  _finalize(){
+  _finalize() {
     if (nonEntityMethods.hasOwnProperty(this.method)) {
       this.string = '' // TODO: test
     }
-    if (!this._source){
+    if (!this._source) {
       this.string = '' // TODO: test?
     }
 
-    if (!this._source._isOriginal){
+    if (!this._source._isOriginal) {
+      const originalContentLength = this.headers['content-length'];
+
       delete this.headers['content-length']
-      if (typeof this._source.finalize === 'function'){
+
+      if (typeof this._source.finalize === 'function') {
         this._source.finalize()
       }
-      if (typeof this._source.size === 'function'){
-        this.headers['content-length'] = this._source.size()
+
+      if (typeof this._source.size === 'function') {
+        const size = this._source.size();
+        if (originalContentLength === undefined && this.method === 'GET') {
+          // do nothing
+          // TODO: check if no originalContentLength then do not add 'content-length' for all possible methods
+        } else {
+          this.headers['content-length'] = size;
+        }
       }
     }
 
@@ -233,7 +243,7 @@ export default class Request extends Body {
       // TODO: test
       if (removeHeaders.hasOwnProperty(lowerCaseName)) {
         delete this.headers[name]
-      } else if (this.headers[name] === undefined){
+      } else if (this.headers[name] === undefined) {
         delete this.headers[name]
       }
     })
