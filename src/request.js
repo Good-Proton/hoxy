@@ -15,7 +15,7 @@ let validProtocols = {
 }
 
 let removeHeaders = {
-  'accept-encoding': true, // until proxy handles gzip
+  // 'accept-encoding': true, // probably it's working
   'proxy-connection': true,
   'proxy-authorization': true,
 }
