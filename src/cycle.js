@@ -24,6 +24,7 @@ import wait from './wait'
 import task from './task'
 import UrlPath from './url-path'
 import HttpsProxyAgent from 'https-proxy-agent';
+import { headerCase } from 'header-case'
 
 let staticServer = (() => {
 
@@ -53,6 +54,15 @@ class ProvisionableRequest {
 
   constructor(opts) {
     this._respProm = task()
+    const headers = { ...opts.headers };
+    Object.keys(headers).forEach(name => {
+      let header = headers[name];
+      delete headers[name];
+
+      if (header !== undefined) {
+        headers[headerCase(name)] = header;
+      }
+    })
     if (/https/i.test(opts.protocol)) {
       if (opts.proxy) {
         const parsedOpts = url.parse(opts.proxy);
@@ -72,7 +82,7 @@ class ProvisionableRequest {
 
         opts.agent = new HttpsProxyAgent(proxyAgentConfig)
       }
-      this._writable = https.request(opts)
+      this._writable = https.request({ ...opts, headers })
     } else {
       if (opts.proxy) {
         let proxyInfo = url.parse(opts.proxy)
@@ -83,7 +93,7 @@ class ProvisionableRequest {
         opts.port = proxyPort
         opts.path = proxyPath
       }
-      this._writable = http.request(opts)
+      this._writable = http.request({ ...opts, headers })
     }
     this._writable.on('response', this._respProm.resolve)
     this._writable.on('error', this._respProm.reject)

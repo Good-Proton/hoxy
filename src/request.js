@@ -8,7 +8,6 @@ import _ from 'lodash'
 import url from 'url'
 import querystring from 'querystring'
 import assert from 'assert'
-import { headerCase } from 'header-case'
 
 let validProtocols = {
   'http:': true,
@@ -248,7 +247,7 @@ export default class Request extends Body {
       }
 
       if (header !== undefined) {
-        this.headers[headerCase(name)] = header;
+        this.headers[name] = header;
       }
     })
 
