@@ -8,6 +8,7 @@ import _ from 'lodash'
 import url from 'url'
 import querystring from 'querystring'
 import assert from 'assert'
+import { headerCase } from 'header-case'
 
 let validProtocols = {
   'http:': true,
@@ -239,12 +240,15 @@ export default class Request extends Body {
     }
 
     Object.keys(this.headers).forEach(name => {
-      const lowerCaseName = name.toLowerCase();
-      // TODO: test
-      if (removeHeaders.hasOwnProperty(lowerCaseName)) {
-        delete this.headers[name]
-      } else if (this.headers[name] === undefined) {
-        delete this.headers[name]
+      let header = this.headers[name];
+      delete this.headers[name];
+
+      if (removeHeaders.hasOwnProperty(name.toLowerCase())) {
+        header === undefined;
+      }
+
+      if (header !== undefined) {
+        this.headers[headerCase(name)] = header;
       }
     })
 
