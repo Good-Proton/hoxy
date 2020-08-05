@@ -243,7 +243,7 @@ export default class Request extends Body {
       delete this.headers[name];
 
       if (removeHeaders.hasOwnProperty(name.toLowerCase())) {
-        header === undefined;
+        header = undefined;
       }
 
       if (header !== undefined) {
