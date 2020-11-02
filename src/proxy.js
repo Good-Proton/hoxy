@@ -344,21 +344,22 @@ export default class Proxy extends EventEmitter {
         const args = cb ? [...arguments].slice(0, -1) : arguments;
 
         // TODO: test bogus port
-        this._server.once('listening', () => {
-            let { port, address } = this._server.address();
+        const that = this;
+        this._server.once('listening', function() {
+            let { port, address } = that._server.address();
             let message = 'proxy listening on ' + port
-            if (this._tls) {
+            if (that._tls) {
                 message = 'https ' + message
             }
-            if (this._reverse) {
-                message += ', reverse ' + this._reverse
+            if (that._reverse) {
+                message += ', reverse ' + that._reverse
             }
-            this.emit('log', {
+            that.emit('log', {
                 level: 'info',
                 message: message,
             })
-            if (this._tlsSpoofingServer) {
-                this._tlsSpoofingServer.listen(0, address, cb);
+            if (that._tlsSpoofingServer) {
+                that._tlsSpoofingServer.listen(0, address, () => cb.apply(this, arguments));
             } else {
                 cb();
             }
