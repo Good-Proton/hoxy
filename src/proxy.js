@@ -336,23 +336,35 @@ export default class Proxy extends EventEmitter {
         }
     }
 
-    listen(port) {
+    listen() {
+        const cb = typeof arguments[arguments.length - 1] === 'function'
+            ? arguments[arguments.length - 1]
+            : () => { };
+
+        const args = cb ? [...arguments].slice(0, -1) : arguments;
+
         // TODO: test bogus port
-        this._server.listen.apply(this._server, arguments)
-        let message = 'proxy listening on ' + port
-        if (this._tls) {
-            message = 'https ' + message
-        }
-        if (this._reverse) {
-            message += ', reverse ' + this._reverse
-        }
-        this.emit('log', {
-            level: 'info',
-            message: message,
-        })
-        if (this._tlsSpoofingServer) {
-            this._tlsSpoofingServer.listen(0, 'localhost')
-        }
+        this._server.once('listening', () => {
+            let { port, address } = this._server.address();
+            let message = 'proxy listening on ' + port
+            if (this._tls) {
+                message = 'https ' + message
+            }
+            if (this._reverse) {
+                message += ', reverse ' + this._reverse
+            }
+            this.emit('log', {
+                level: 'info',
+                message: message,
+            })
+            if (this._tlsSpoofingServer) {
+                this._tlsSpoofingServer.listen(0, address, cb);
+            } else {
+                cb();
+            }
+        });
+        this._server.listen.apply(this._server, args);
+
         return this
     }
 
