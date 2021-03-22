@@ -297,9 +297,9 @@ async function getStaticServer(host = 'localhost') {
      * hoxy to implement the 'request-sent' phase.
      */
     _sendToServer() {
-      let req = this._request._finalize()
+      let upstreamProxy = this._request.upstreamProxy || this._proxy._upstreamProxy
+        , req = this._request._finalize()
         , resp = this._response
-        , upstreamProxy = this._proxy._upstreamProxy
         , source = req._source
         , pSlow = this._proxy._slow || {}
         , rSlow = req.slow() || {}

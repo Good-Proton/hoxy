@@ -16,6 +16,7 @@ import net from 'net'
 import https from 'https'
 import { ThrottleGroup } from 'stream-throttle'
 import stream from 'stream'
+import { checkUpstreamProxyUrl } from './request';
 
 // TODO: test all five for both requet and response
 let asHandlers = {
@@ -133,14 +134,7 @@ export default class Proxy extends EventEmitter {
         }
 
         if (opts.upstreamProxy) {
-            let proxy = opts.upstreamProxy
-            if (!/^https?:\/\//.test(proxy)) {
-                proxy = 'http://' + proxy
-            }
-            if (!/^https?:\/\/(?:[^:@]+:[^:@]+@)?[^:@]+:\d+$/.test(proxy)) {
-                throw new Error(`invalid value for upstreamProxy: "${opts.upstreamProxy}"`)
-            }
-            this._upstreamProxy = proxy
+            this._upstreamProxy = checkUpstreamProxyUrl(opts.upstreamProxy);
         }
 
         if (opts.slow) {
@@ -345,7 +339,7 @@ export default class Proxy extends EventEmitter {
 
         // TODO: test bogus port
         const that = this;
-        this._server.once('listening', function() {
+        this._server.once('listening', function () {
             let { port, address } = that._server.address();
             let message = 'proxy listening on ' + port
             if (that._tls) {

@@ -17,13 +17,24 @@ let validProtocols = {
 let removeHeaders = {
   // 'accept-encoding': true, // probably it's working
   'proxy-connection': true,
-  'proxy-authorization': true,
+  'proxy-authorization': true
 }
 
 let nonEntityMethods = {
   GET: true,
   HEAD: true,
   TRACE: true,
+}
+
+export function checkUpstreamProxyUrl(upstreamProxy) {
+  let proxy = upstreamProxy
+  if (!/^https?:\/\//.test(proxy)) {
+    proxy = 'http://' + proxy
+  }
+  if (!/^https?:\/\/(?:[^:@]+:[^:@]+@)?[^:@]+:\d+$/.test(proxy)) {
+    throw new Error(`invalid value for upstreamProxy: "${upstreamProxy}"`)
+  }
+  return proxy;
 }
 
 /**
@@ -139,6 +150,15 @@ export default class Request extends Body {
 
   set headers(headers) {
     this._setRawDataItem('headers', _.extend({}, headers))
+  }
+
+  get upstreamProxy() {
+    return this._getRawDataItem('upstreamProxy')
+  }
+
+  set upstreamProxy(upstreamProxy) {
+    upstreamProxy = checkUpstreamProxyUrl(upstreamProxy)
+    this._setRawDataItem('upstreamProxy', upstreamProxy)
   }
 
   fullUrl(u) {

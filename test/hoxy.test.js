@@ -68,6 +68,21 @@ describe('hoxy', function () {
     upstream.intercept('request', () => done())
   })
 
+  it('should use an upstream proxy from request', done => {
+    let proxyUpstream = new Proxy().listen(0, () => {
+      let requestUpsteam = new Proxy().listen(0, () => {
+        send({}, false, { upstreamProxy: `localhost:${proxyUpstream.address().port}` })
+          .through('request', req => {
+            req.upstreamProxy = `localhost:${requestUpsteam.address().port}`
+          })
+          .promise()
+          .catch(done)
+      })
+      requestUpsteam.intercept('request', () => done())
+    })
+    proxyUpstream.intercept('request', () => done(new Error('incorrect upstream proxy')))
+  })
+
   describe('should properly handle connection errors', () => {
     async function createServer(timeout, delay) {
       const server = http.createServer((req, res) => {
