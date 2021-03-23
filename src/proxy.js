@@ -41,6 +41,10 @@ let asHandlers = {
     'string': () => { },
 }
 
+/**
+ * @typedef {'request' | 'response' | 'request-sent' | 'response-sent' } Phase
+ */
+
 function wrapAsync(intercept) {
     return function (req, resp, cycle) {
         let result = intercept.call(this, req, resp, cycle)
@@ -363,6 +367,13 @@ export default class Proxy extends EventEmitter {
         return this
     }
 
+    /**
+     * The entry point for intercepting and operating on requests and responses
+     * 
+     * @param {Phase | { phase: Phase }} opts Options affect how, or if, interceptors get called
+     * @param {(req: Request, resp: Response, cycle: Cycle) => void} intercept The callback passed to intercept() (AKA the **interceptor**)
+     * @returns {(req: Request, resp: Response, cycle: Cycle) => Promise<void>}
+     */
     intercept(opts, intercept) {
         // TODO: test string versus object
         // TODO: test opts is undefined

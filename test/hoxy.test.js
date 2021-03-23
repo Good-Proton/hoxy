@@ -83,6 +83,22 @@ describe('hoxy', function () {
     proxyUpstream.intercept('request', () => done(new Error('incorrect upstream proxy')))
   })
 
+  it.only('should not use an upstream proxy if it is `null` in request', done => {
+    let upstream = new Proxy(
+    ).listen(0, () => {
+      send({}, false, { upstreamProxy: `localhost:${upstream.address().port}` })
+        .through('request', req => {
+          req.upstreamProxy = ''
+        })
+        .promise()
+        .then(() => done(), done)
+    })
+    upstream.intercept('request', () => {
+      done('upstream proxy used')
+      throw new Error('upstream proxy used')
+    })
+  })
+
   describe('should properly handle connection errors', () => {
     async function createServer(timeout, delay) {
       const server = http.createServer((req, res) => {

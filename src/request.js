@@ -152,12 +152,20 @@ export default class Request extends Body {
     this._setRawDataItem('headers', _.extend({}, headers))
   }
 
+  /** @type {string | undefined | null} upstream proxy for request */
   get upstreamProxy() {
-    return this._getRawDataItem('upstreamProxy')
+    const upstreamProxy = this._getRawDataItem('upstreamProxy')
+    return upstreamProxy === undefined
+      ? undefined
+      : upstreamProxy || null
   }
 
   set upstreamProxy(upstreamProxy) {
-    upstreamProxy = checkUpstreamProxyUrl(upstreamProxy)
+    upstreamProxy = upstreamProxy
+      ? checkUpstreamProxyUrl(upstreamProxy)
+      : upstreamProxy === undefined
+        ? undefined
+        : null
     this._setRawDataItem('upstreamProxy', upstreamProxy)
   }
 
