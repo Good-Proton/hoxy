@@ -83,7 +83,7 @@ describe('hoxy', function () {
     proxyUpstream.intercept('request', () => done(new Error('incorrect upstream proxy')))
   })
 
-  it.only('should not use an upstream proxy if it is `null` in request', done => {
+  it('should not use an upstream proxy if it is `null` in request', done => {
     let upstream = new Proxy(
     ).listen(0, () => {
       send({}, false, { upstreamProxy: `localhost:${upstream.address().port}` })
