@@ -6,7 +6,6 @@
 import Request from './request'
 import Response from './response'
 import streams from './streams'
-import awate from 'await'
 import mkdirp from 'mkdirp'
 import _ from 'lodash'
 import { Server as DocRootServer } from 'node-static'
@@ -373,10 +372,5 @@ export default class Cycle extends EventEmitter {
         source.pipe(outResp)
       })
     })
-  }
-
-  _start() {
-    // for now, an immediately-kept promise
-    return awate('started').keep('started')
   }
 }
